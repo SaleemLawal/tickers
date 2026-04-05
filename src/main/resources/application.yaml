@@ -1,3 +1,9 @@
 spring:
   application:
     name: demo
+
+coinbase:
+  url: wss://ws-feed.exchange.coinbase.com
+  products:
+    - ETH-USD
+    - BTC-USD

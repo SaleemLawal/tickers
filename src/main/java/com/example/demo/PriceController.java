@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import com.example.demo.model.PriceTick;
+import com.example.demo.service.WebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.MediaType;
