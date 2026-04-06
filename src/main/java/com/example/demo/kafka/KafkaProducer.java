@@ -5,17 +5,18 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.IntegerSerializer;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.kafka.sender.KafkaSender;
 import reactor.kafka.sender.SenderOptions;
 import reactor.kafka.sender.SenderRecord;
 import reactor.kafka.sender.SenderResult;
-
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -25,17 +26,17 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 @Component
-public class Producer {
-    private static final Logger log = LoggerFactory.getLogger(Producer.class.getName());
+public class KafkaProducer {
+    private static final Logger log = LoggerFactory.getLogger(KafkaProducer.class.getName());
 
     private final String topic;
 
     private final KafkaSender<Integer, PriceTick> sender;
     private final DateTimeFormatter dateFormat =  DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public Producer(
-            @Value("${kafka.producer.bootstrapServer}") String bootstrapServer,
-            @Value("${kafka.producer.topicName}") String topic
+    public KafkaProducer(
+            @Value("${kafka.bootstrapServer}") String bootstrapServer,
+            @Value("${kafka.topicName}") String topic
     ) {
         this.topic = topic;
         Map<String, Object> props = new HashMap<>();
@@ -49,17 +50,16 @@ public class Producer {
         sender = KafkaSender.create(senderOptions);
     }
 
-    public void sendMessage(PriceTick priceTick) {
-        sender.send(Mono.just(SenderRecord.create(new ProducerRecord<>(topic, 0, priceTick), priceTick)))
-                .doOnError(e -> log.error("Send failed", e))
-                .onErrorContinue((_, _) -> {})
-                .subscribe();
+    public Flux<@NotNull SenderResult<PriceTick>> sendMessage(PriceTick priceTick) {
+        return sender.send(Mono.just(SenderRecord.create(new ProducerRecord<>(topic, 0, priceTick), priceTick)))
+                .doOnNext(func)
+                .onErrorContinue((e, _) -> log.error("Send failed", e));
     }
 
     private final Consumer<SenderResult<PriceTick>> func = r ->  {
         RecordMetadata metadata = r.recordMetadata();
         Instant timestamp = Instant.ofEpochMilli(metadata.timestamp());
-        System.out.printf("Message %s sent successfully, topic-partition=%s-%d offset=%d timestamp=%s\n",
+        log.debug("Message {} sent successfully, topic-partition={}-{} offset={} timestamp={}",
                 r.correlationMetadata(),
                 metadata.topic(),
                 metadata.partition(),

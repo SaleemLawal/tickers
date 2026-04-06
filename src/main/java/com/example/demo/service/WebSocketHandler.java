@@ -1,18 +1,19 @@
 package com.example.demo.service;
 
 import com.example.demo.config.CoinbaseProperties;
-import com.example.demo.kafka.Producer;
+import com.example.demo.kafka.KafkaConsumer;
+import com.example.demo.kafka.KafkaProducer;
 import com.example.demo.model.PriceTick;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.jetbrains.annotations.NotNull;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -22,19 +23,16 @@ import static com.example.demo.model.PriceTick.constructPriceTick;
 
 @Component
 public class WebSocketHandler implements org.springframework.web.reactive.socket.WebSocketHandler {
+    private static final Logger log = LoggerFactory.getLogger(WebSocketHandler.class.getName());
+
     private final CoinbaseProperties coinbaseProperties;
-    private final Producer kafkaProducer;
+    private final KafkaProducer kafkaProducer;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Sinks.Many<@NotNull PriceTick> sink = Sinks.many().multicast().directBestEffort();
 
-    public WebSocketHandler(CoinbaseProperties coinbaseProperties, Producer kafkaProducer) {
+    public WebSocketHandler(CoinbaseProperties coinbaseProperties, KafkaProducer kafkaProducer) {
         this.coinbaseProperties = coinbaseProperties;
         this.kafkaProducer = kafkaProducer;
-    }
-
-    public Flux<@NotNull PriceTick> getTickerFlux() {
-        return sink.asFlux();
     }
 
     @Override
@@ -52,22 +50,18 @@ public class WebSocketHandler implements org.springframework.web.reactive.socket
         return session.send(subscribe)
                 .thenMany(session.receive())
                 .map(WebSocketMessage::getPayloadAsText)
-                .flatMap(json -> {
+                .<PriceTick>handle((json, sink) -> {
                     try {
-                        Map<String, Object> map = mapper.readValue(json, new TypeReference<>() {
-                        });
-                        if (!map.get("type").equals("ticker")) {
-                            return Mono.empty();
+                        Map<String, Object> payload = mapper.readValue(json, new TypeReference<>() {});
+                        if (payload.get("type").equals("ticker")) {
+                            sink.next(constructPriceTick(payload));
                         }
-                        PriceTick priceTick = constructPriceTick(map);
-                        kafkaProducer.sendMessage(priceTick);
-                        return Mono.just(priceTick);
-                    } catch (Exception e) {
-                        return Mono.error(e);
+                    } catch (JsonProcessingException e) {
+                        sink.error(new RuntimeException(e));
                     }
                 })
-                .doOnNext(sink::tryEmitNext)
-                .doOnError(e -> System.err.println("Error: " + e.getMessage()))
+                .flatMap(kafkaProducer::sendMessage)
+                .doOnError(e -> log.error("Error: {}", e.getMessage()))
                 .then();
     }
 
