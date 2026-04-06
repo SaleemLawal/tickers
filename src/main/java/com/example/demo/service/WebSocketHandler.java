@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.config.CoinbaseProperties;
+import com.example.demo.kafka.Producer;
 import com.example.demo.model.PriceTick;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +23,14 @@ import static com.example.demo.model.PriceTick.constructPriceTick;
 @Component
 public class WebSocketHandler implements org.springframework.web.reactive.socket.WebSocketHandler {
     private final CoinbaseProperties coinbaseProperties;
+    private final Producer kafkaProducer;
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final Sinks.Many<@NotNull PriceTick> sink = Sinks.many().multicast().directBestEffort();
 
-    public WebSocketHandler(CoinbaseProperties coinbaseProperties) {
+    public WebSocketHandler(CoinbaseProperties coinbaseProperties, Producer kafkaProducer) {
         this.coinbaseProperties = coinbaseProperties;
+        this.kafkaProducer = kafkaProducer;
     }
 
     public Flux<@NotNull PriceTick> getTickerFlux() {
@@ -56,7 +59,9 @@ public class WebSocketHandler implements org.springframework.web.reactive.socket
                         if (!map.get("type").equals("ticker")) {
                             return Mono.empty();
                         }
-                        return Mono.just(constructPriceTick(map));
+                        PriceTick priceTick = constructPriceTick(map);
+                        kafkaProducer.sendMessage(priceTick);
+                        return Mono.just(priceTick);
                     } catch (Exception e) {
                         return Mono.error(e);
                     }

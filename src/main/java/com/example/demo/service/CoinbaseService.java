@@ -23,7 +23,6 @@ public class CoinbaseService {
     }
     @PostConstruct
     public void connect() {
-
         client.execute(URI.create(coinbaseProperties.getUrl()), handler)
                 .retryWhen(Retry.backoff(10, Duration.ofSeconds(2)))
                 .subscribe();

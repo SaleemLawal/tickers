@@ -7,3 +7,8 @@ coinbase:
   products:
     - ETH-USD
     - BTC-USD
+
+kafka:
+  producer:
+    bootstrapServer: localhost:9092
+    topicName: price-ticks
