@@ -15,8 +15,8 @@ coinbase:
     - BTC-USD
 
 kafka:
-    bootstrapServer: localhost:9092
-    topicName: price-ticks
+  bootstrapServer: localhost:9092
+  topicName: price-ticks
 logging:
   level:
     root: info

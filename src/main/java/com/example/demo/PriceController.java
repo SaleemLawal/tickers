@@ -15,11 +15,11 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class PriceController {
 
-    private final KafkaConsumer kafkaConsumer;
+  private final KafkaConsumer kafkaConsumer;
 
-    @GetMapping(value = "/ticks", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<@NotNull Alert> demo() {
-        log.info("accessing /ticks endpoint");
-        return kafkaConsumer.getAlertSink().asFlux();
-    }
+  @GetMapping(value = "/ticks", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  public Flux<@NotNull Alert> demo() {
+    log.info("accessing /ticks endpoint");
+    return kafkaConsumer.getAlertSink().asFlux();
+  }
 }

@@ -8,5 +8,5 @@ import reactor.core.publisher.Flux;
 
 @Repository
 public interface RuleRepository extends R2dbcRepository<@NotNull Rule, @NotNull Long> {
-    Flux<@NotNull Rule> findRuleByEnabled(boolean enabled);
+  Flux<@NotNull Rule> findRuleByEnabled(boolean enabled);
 }

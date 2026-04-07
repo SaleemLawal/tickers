@@ -10,9 +10,9 @@ import java.util.List;
 @Configuration
 public class R2dbcConfig {
 
-    @Bean
-    R2dbcCustomConversions r2dbcCustomConversions() {
-        return R2dbcCustomConversions.of(PostgresDialect.INSTANCE,
-                List.of(new ConditionReadConverter()));
-    }
+  @Bean
+  R2dbcCustomConversions r2dbcCustomConversions() {
+    return R2dbcCustomConversions.of(
+        PostgresDialect.INSTANCE, List.of(new ConditionReadConverter()));
+  }
 }

@@ -12,6 +12,6 @@ import java.util.List;
 @Getter
 @Setter
 public class CoinbaseProperties {
-    private String url;
-    private List<String> products;
+  private String url;
+  private List<String> products;
 }

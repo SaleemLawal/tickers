@@ -7,8 +7,8 @@ import org.springframework.data.convert.ReadingConverter;
 
 @ReadingConverter
 public class ConditionReadConverter implements Converter<@NotNull String, Condition> {
-    @Override
-    public Condition convert(String source) {
-        return Condition.valueOf(source.toUpperCase());
-    }
+  @Override
+  public Condition convert(String source) {
+    return Condition.valueOf(source.toUpperCase());
+  }
 }

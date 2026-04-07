@@ -9,16 +9,9 @@ import java.time.Instant;
 
 @Table("rules")
 public record Rule(
-        @Id
-        Integer id,
-
-        @Column("product_id")
-        String productId,
-        Condition condition,
-        BigDecimal threshold,
-        boolean enabled,
-        
-        @Column("created_at")
-        Instant createdAt
-) {
-}
+    @Id Integer id,
+    @Column("product_id") String productId,
+    Condition condition,
+    BigDecimal threshold,
+    boolean enabled,
+    @Column("created_at") Instant createdAt) {}

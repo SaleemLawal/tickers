@@ -12,19 +12,21 @@ import java.time.Duration;
 
 @Service
 public class CoinbaseService {
-    private final WebSocketClient client = new ReactorNettyWebSocketClient();
+  private final WebSocketClient client = new ReactorNettyWebSocketClient();
 
-    private final WebSocketHandler handler;
-    private final CoinbaseProperties coinbaseProperties;
+  private final WebSocketHandler handler;
+  private final CoinbaseProperties coinbaseProperties;
 
-    public CoinbaseService(WebSocketHandler handler, CoinbaseProperties coinbaseProperties) {
-        this.handler = handler;
-        this.coinbaseProperties = coinbaseProperties;
-    }
-    @PostConstruct
-    public void connect() {
-        client.execute(URI.create(coinbaseProperties.getUrl()), handler)
-                .retryWhen(Retry.backoff(10, Duration.ofSeconds(2)))
-                .subscribe();
-    }
+  public CoinbaseService(WebSocketHandler handler, CoinbaseProperties coinbaseProperties) {
+    this.handler = handler;
+    this.coinbaseProperties = coinbaseProperties;
+  }
+
+  @PostConstruct
+  public void connect() {
+    client
+        .execute(URI.create(coinbaseProperties.getUrl()), handler)
+        .retryWhen(Retry.backoff(10, Duration.ofSeconds(2)))
+        .subscribe();
+  }
 }
