@@ -1,7 +1,7 @@
 package com.example.demo;
 
 import com.example.demo.kafka.KafkaConsumer;
-import com.example.demo.model.PriceTick;
+import com.example.demo.model.Alert;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +18,8 @@ public class PriceController {
     private final KafkaConsumer kafkaConsumer;
 
     @GetMapping(value = "/ticks", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<@NotNull PriceTick> demo() {
+    public Flux<@NotNull Alert> demo() {
         log.info("accessing /ticks endpoint");
-        return kafkaConsumer.getSink().asFlux();
+        return kafkaConsumer.getAlertSink().asFlux();
     }
 }

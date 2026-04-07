@@ -14,7 +14,7 @@ public record Rule(
 
         @Column("product_id")
         String productId,
-        String condition,
+        Condition condition,
         BigDecimal threshold,
         boolean enabled,
         

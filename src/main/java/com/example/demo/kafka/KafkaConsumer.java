@@ -1,6 +1,8 @@
 package com.example.demo.kafka;
 
+import com.example.demo.model.Alert;
 import com.example.demo.model.PriceTick;
+import com.example.demo.service.RuleService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -29,18 +31,20 @@ import java.util.function.Consumer;
 public class KafkaConsumer {
 
     private final String topic;
+    private final RuleService ruleService;
 
     private final ReceiverOptions<Integer, PriceTick> receiverOptions;
 
     private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Getter
-    private final Sinks.Many<@NotNull PriceTick> sink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<@NotNull Alert> alertSink = Sinks.many().multicast().directBestEffort();
 
     public KafkaConsumer(
             @Value("${kafka.bootstrapServer}") String bootstrapServer,
-            @Value("${kafka.topicName}") String topic) {
+            @Value("${kafka.topicName}") String topic, RuleService ruleService) {
         this.topic = topic;
+        this.ruleService = ruleService;
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, "sample-consumer");
@@ -59,15 +63,17 @@ public class KafkaConsumer {
         consumeMessages().subscribe();
     }
 
-    public Flux<@NotNull ReceiverRecord<Integer, PriceTick>> consumeMessages() {
+    public Flux<@NotNull Alert> consumeMessages() {
 
         ReceiverOptions<Integer, PriceTick> options = receiverOptions.subscription(Collections.singleton(topic))
                 .addAssignListener(partitions -> log.debug("onPartitionsAssigned {}", partitions))
                 .addRevokeListener(partitions -> log.debug("onPartitionsRevoked {}", partitions));
+
         Flux<@NotNull ReceiverRecord<Integer, PriceTick>> kafkaFlux = KafkaReceiver.create(options).receive();
         return kafkaFlux
-                .doOnNext(v -> sink.tryEmitNext(v.value()))
                 .doOnNext(func)
+                .flatMap(record -> ruleService.evaluate(record.value()))
+                .doOnNext(alertSink::tryEmitNext)
                 .onErrorContinue((e, _) -> log.error("Send failed", e));
     }
 
