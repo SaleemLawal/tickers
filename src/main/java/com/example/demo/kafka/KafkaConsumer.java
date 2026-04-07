@@ -1,13 +1,11 @@
 package com.example.demo.kafka;
 
 import com.example.demo.model.PriceTick;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.springframework.stereotype.Component;
@@ -27,8 +25,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 @Component
+@Slf4j
 public class KafkaConsumer {
-    private static final Logger log = LoggerFactory.getLogger(KafkaConsumer.class.getName());
 
     private final String topic;
 
@@ -55,8 +53,9 @@ public class KafkaConsumer {
         receiverOptions = ReceiverOptions.create(props);
     }
 
-    @PostConstruct
+    // @PostConstruct
     public void startConsuming() {
+        log.info("Starting consumer");
         consumeMessages().subscribe();
     }
 

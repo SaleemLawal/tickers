@@ -1,13 +1,12 @@
 package com.example.demo.kafka;
 
 import com.example.demo.model.PriceTick;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import org.springframework.stereotype.Component;
@@ -26,8 +25,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 @Component
+@Slf4j
 public class KafkaProducer {
-    private static final Logger log = LoggerFactory.getLogger(KafkaProducer.class.getName());
 
     private final String topic;
 

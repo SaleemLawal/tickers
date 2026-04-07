@@ -1,6 +1,12 @@
 spring:
   application:
     name: demo
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/mydatabase
+    username: myuser
+    password: secret
+    pool:
+      max-size: 10
 
 coinbase:
   url: wss://ws-feed.exchange.coinbase.com
